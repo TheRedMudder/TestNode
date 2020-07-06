@@ -1,3 +1,4 @@
 #!/bin/bash
 
-mkdir "TestingWorks"
+git pull origin master
+npm install
