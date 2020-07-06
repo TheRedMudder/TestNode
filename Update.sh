@@ -1,6 +1,6 @@
 #!/bin/bash
 
-git checkout .
+git reset --hard
 git pull origin master
 npm install --silent
 pm2 delete all
