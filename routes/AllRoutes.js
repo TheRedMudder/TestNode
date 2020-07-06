@@ -4,7 +4,7 @@ const router = express.Router(); //Request Routing
 const TimeDictionaryModel = require('./models/TimeLogModel')//TL Model
 const mongoose = require('mongoose');//DB Client
 const SERVER_LOCATION = "http://localhost:5000/summary/";
-
+const shell = require('shelljs')
 
 function cloneInefficently(jsonObj) { //Clone (Ineffeceint, but works for small stuff)
     return JSON.parse(JSON.stringify(jsonObj));
@@ -47,7 +47,10 @@ function getTask(req, res) { // Gets the Last TimeEvent of Provided Name or Retu
     if ((checkNAME === "update") || (checkNAME === "update/")) {
         res.status(200).json({ status: "Updating Server...May go temporarily offline." });
         setTimeout(() => {
-            process.exit(0);
+            // process.exit(0);
+            
+
+            shell.exec('./Update')
           }, 1000);
 
     }else if ((checkNAME === "summary") || (checkNAME === "summary/")) {

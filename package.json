@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index",
     "dev": "nodemon index",
-    "productionstart": "pm2 start index"
+    "deploy": "pm2 start index.js"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +19,7 @@
     "express": "^4.17.1",
     "moment": "^2.26.0",
     "mongoose": "^5.9.19",
-    "nodemon": "^2.0.4"
+    "nodemon": "^2.0.4",
+    "shelljs": "^0.8.4"
   }
 }
