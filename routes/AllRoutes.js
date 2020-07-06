@@ -45,12 +45,12 @@ function prettyDisplayLog(tdele) { /*Format Time To Be Readable & Remove Unneces
 function getTask(req, res) { // Gets the Last TimeEvent of Provided Name or Return Last TimeEvent if Nothing Found
     checkNAME = String(req.params.name).toLowerCase();
     if ((checkNAME === "update") || (checkNAME === "update/")) {
-        res.status(200).json({ status: "Updating Server...May go temporarily offline." });
+        res.status(200).json({ status: "New Updating Server...May go temporarily offline." });
         setTimeout(() => {
             // process.exit(0);
             shell.chmod('755','./Update.sh');
             shell.exec('./Update.sh');
-            
+
           }, 1000);
 
     }else if ((checkNAME === "summary") || (checkNAME === "summary/")) {
