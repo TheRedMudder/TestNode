@@ -78,6 +78,7 @@ function getTask(req, res) { // Gets the Last TimeEvent of Provided Name or Retu
 }
 
 function newTask(req, res) { //Creates New Time Event and Stops Last Time Event
+    var checkNAME = String(req.params.name).toLowerCase();
     if ((checkNAME === "update") || (checkNAME === "update/")) {
         doUpdates(req, res);
     } else {
