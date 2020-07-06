@@ -49,7 +49,7 @@ function getTask(req, res) { // Gets the Last TimeEvent of Provided Name or Retu
         setTimeout(() => {
             // process.exit(0);
             shell.chmod('755','./Update.sh');
-            shell.exec('./Update.sh',{async:true});
+            shell.exec('./Update.sh &',{async:true});
 
           }, 1000);
 
