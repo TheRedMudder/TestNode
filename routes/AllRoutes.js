@@ -10,21 +10,21 @@ function cloneInefficently(jsonObj) { //Clone (Ineffeceint, but works for small 
     return JSON.parse(JSON.stringify(jsonObj));
 }
 
-function prettyZeros(t){ //Prepend Zeros to Time Elapsed if necessary
-    var s = ""+t;
-    while (s.length<2){
-        s="0"+s;
+function prettyZeros(t) { //Prepend Zeros to Time Elapsed if necessary
+    var s = "" + t;
+    while (s.length < 2) {
+        s = "0" + s;
     }
     return s;
 }
 
-function prettyTimeElapsed(timeinsec){ //Formatted Time Elapsed
-    var durationtime=new Date((timeinsec+1) * 1000);
-    return prettyZeros(durationtime.getUTCHours().toString())+":"+prettyZeros(durationtime.getUTCMinutes().toString())+":"+prettyZeros(durationtime.getUTCSeconds().toString());
+function prettyTimeElapsed(timeinsec) { //Formatted Time Elapsed
+    var durationtime = new Date((timeinsec + 1) * 1000);
+    return prettyZeros(durationtime.getUTCHours().toString()) + ":" + prettyZeros(durationtime.getUTCMinutes().toString()) + ":" + prettyZeros(durationtime.getUTCSeconds().toString());
 }
 
-function prettyDayElapsed(timeinsec){ //Formatted Time Elapsed
-    var durationtime=new Date((timeinsec+1) * 1000);
+function prettyDayElapsed(timeinsec) { //Formatted Time Elapsed
+    var durationtime = new Date((timeinsec + 1) * 1000);
     return Number(durationtime.getUTCDate().toString());
 }
 function prettyDisplayLog(tdele) { /*Format Time To Be Readable & Remove Unnecessary JSON Attributes */
@@ -32,8 +32,8 @@ function prettyDisplayLog(tdele) { /*Format Time To Be Readable & Remove Unneces
     timeentry = cloneInefficently(tdele);
     timeentry._id = undefined; timeentry.__v = undefined;// Removing Garbage Attributes
     if (timeentry.StopTime.length > 0) {// Make Stop Time Readable
-        timeentry.PrettyStop = new Date(timeentry.StopTime * 1000).toString(); 
-        timeentry.Duration =prettyTimeElapsed(timeentry.StopTime - timeentry.StartTime) ;
+        timeentry.PrettyStop = new Date(timeentry.StopTime * 1000).toString();
+        timeentry.Duration = prettyTimeElapsed(timeentry.StopTime - timeentry.StartTime);
     } else {
         timeentry.StopTime = undefined;
         timeentry.Duration = undefined;
@@ -41,19 +41,20 @@ function prettyDisplayLog(tdele) { /*Format Time To Be Readable & Remove Unneces
     timeentry.PrettyStartTime = new Date(timeentry.StartTime * 1000).toString();// Make Start Time Readable
     return timeentry;
 }
+function doUpdates(req, res) {
+    res.status(200).json({ status: "Old Updating Server...May go temporarily offline." });
+    setTimeout(() => {
+        // process.exit(0);
+        shell.chmod('755', './Update.sh');
+        shell.exec('./Update.sh &', { async: true });
+    }, 1000);
 
+}
 function getTask(req, res) { // Gets the Last TimeEvent of Provided Name or Return Last TimeEvent if Nothing Found
     checkNAME = String(req.params.name).toLowerCase();
     if ((checkNAME === "update") || (checkNAME === "update/")) {
-        res.status(200).json({ status: "Old Updating Server...May go temporarily offline." });
-        setTimeout(() => {
-            // process.exit(0);
-            shell.chmod('755','./Update.sh');
-            shell.exec('./Update.sh &',{async:true});
-
-          }, 1000);
-
-    }else if ((checkNAME === "summary") || (checkNAME === "summary/")) {
+        doUpdates(req, res);
+    } else if ((checkNAME === "summary") || (checkNAME === "summary/")) {
         getAllTask(req, res);
     } else if ((checkNAME === "stop") || (checkNAME === "stop/")) {
         stopTask(req, res);
@@ -66,7 +67,7 @@ function getTask(req, res) { // Gets the Last TimeEvent of Provided Name or Retu
             } else {
                 TimeDictionaryModel.find().sort({ _id: -1 }).limit(1).exec().then(docs => {
                     if (docs.length > 0) {
-                        res.json({ lastevent: prettyDisplayLog(docs[0]) });
+                        res.json({ lastevents: prettyDisplayLog(docs[0]) });
                     } else {
                         res.json({ Error: "Nothing to retrieve! Use POST to add first TimeEvent" });
                     }
@@ -77,36 +78,40 @@ function getTask(req, res) { // Gets the Last TimeEvent of Provided Name or Retu
 }
 
 function newTask(req, res) { //Creates New Time Event and Stops Last Time Event
-    var time_stopstart = Date.now() / 1000;
-    TimeDictionaryModel.find().sort({ _id: -1 }).limit(1).exec().then(docs => {
-        if (docs.length > 0 && docs[0].StopTime.length == 0) {
-            TimeDictionaryModel.update({ _id: docs[0]._id }, { $set: { StopTime: time_stopstart } }).exec();
-        }
-    }).catch(err => { res.status(500).json({ error: err }); });
-    var taskname = '';
-    if (typeof req.body.name !== 'undefined') {
-        taskname = req.body.name;
-    } else if ((typeof req.params.name !== 'undefined') && (String(req.params.name).toLowerCase() !== "new") && (String(req.params.name).toLowerCase() !== "new/")) {
-        taskname = req.params.name;
+    if ((checkNAME === "update") || (checkNAME === "update/")) {
+        doUpdates(req, res);
     } else {
-        res.status(500).json({ error: "You wanted to create a activity to track, but didn't give it a name!" });
-        return;
-    }
-    var tdElement;
-    const tdModel = new TimeDictionaryModel({
-        _id: new mongoose.Types.ObjectId,
-        TaskName: taskname,
-        Summary: SERVER_LOCATION + taskname,
-        StartTime: time_stopstart,
-        IsProductiveTime: String(req.body.productivetime) === "0" ? 0 : 1,
-        StopTime: "",
-        Duration: ""
-    });
-    tdModel.save().then(result => {
-        res.json(prettyDisplayLog(result));
-    }).catch(err => { res.status(500).json({ error: err }); });
-}
 
+        var time_stopstart = Date.now() / 1000;
+        TimeDictionaryModel.find().sort({ _id: -1 }).limit(1).exec().then(docs => {
+            if (docs.length > 0 && docs[0].StopTime.length == 0) {
+                TimeDictionaryModel.update({ _id: docs[0]._id }, { $set: { StopTime: time_stopstart } }).exec();
+            }
+        }).catch(err => { res.status(500).json({ error: err }); });
+        var taskname = '';
+        if (typeof req.body.name !== 'undefined') {
+            taskname = req.body.name;
+        } else if ((typeof req.params.name !== 'undefined') && (String(req.params.name).toLowerCase() !== "new") && (String(req.params.name).toLowerCase() !== "new/")) {
+            taskname = req.params.name;
+        } else {
+            res.status(500).json({ error: "You wanted to create a activity to track, but didn't give it a name!" });
+            return;
+        }
+        var tdElement;
+        const tdModel = new TimeDictionaryModel({
+            _id: new mongoose.Types.ObjectId,
+            TaskName: taskname,
+            Summary: SERVER_LOCATION + taskname,
+            StartTime: time_stopstart,
+            IsProductiveTime: String(req.body.productivetime) === "0" ? 0 : 1,
+            StopTime: "",
+            Duration: ""
+        });
+        tdModel.save().then(result => {
+            res.json(prettyDisplayLog(result));
+        }).catch(err => { res.status(500).json({ error: err }); });
+    }
+}
 function stopTask(req, res) { // Stops the Last TimeEvent
     var time_stopstart = Date.now() / 1000;
     TimeDictionaryModel.find().sort({ _id: -1 }).limit(1).exec().then(docs => {
@@ -131,64 +136,64 @@ function getAllTask(req, res) {
         taskname = req.body.name;
     } else if ((typeof req.params.name !== 'undefined') && (String(req.params.name).toLowerCase() !== "summary") && (String(req.params.name).toLowerCase() !== "summary/")) {
         taskname = req.params.name;
-    } 
+    }
     FinalReport = []; //
     CompleteReport = []; //
     TotalDuration = 0; //
     HourData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     DayData = { 'DayTotal': 0, 'HoursTotal': HourData }; //Different Day Total/Hour Total Different
-    LastSevenDays = [cloneInefficently(DayData),cloneInefficently(DayData),cloneInefficently(DayData),cloneInefficently(DayData),cloneInefficently(DayData),cloneInefficently(DayData),cloneInefficently(DayData)];//DEEP COPY OF DAY DATA
-    taskAllTime=0;
+    LastSevenDays = [cloneInefficently(DayData), cloneInefficently(DayData), cloneInefficently(DayData), cloneInefficently(DayData), cloneInefficently(DayData), cloneInefficently(DayData), cloneInefficently(DayData)];//DEEP COPY OF DAY DATA
+    taskAllTime = 0;
     TimeDictionaryModel.find().sort({ _id: -1 }).limit(100).exec().then(docs => {
-    // for (a in ):
+        // for (a in ):
         if (docs.length > 0) {
             for (var key in docs) {
                 // skip loop if the property is from prototype
                 if (!docs.hasOwnProperty(key)) continue;
                 var obj = docs[key];
-                var loggedData=prettyDisplayLog(obj);
+                var loggedData = prettyDisplayLog(obj);
                 CompleteReport.push(loggedData);
                 var stopN
-                if (obj.StopTime.length > 0){
-                    stopN=Number(obj.StopTime);
-                }else{
-                    stopN=Date.now() / 1000;
+                if (obj.StopTime.length > 0) {
+                    stopN = Number(obj.StopTime);
+                } else {
+                    stopN = Date.now() / 1000;
                 }
-                newTime=Number(stopN)-Number(obj.StartTime);
-                taskAllTime=taskAllTime+newTime;
+                newTime = Number(stopN) - Number(obj.StartTime);
+                taskAllTime = taskAllTime + newTime;
                 console.log(taskAllTime);
-                
-                if (String(obj.TaskName).toLowerCase()===String(taskname).toLowerCase()){
+
+                if (String(obj.TaskName).toLowerCase() === String(taskname).toLowerCase()) {
                     FinalReport.push(loggedData);
-                    var startTime=Number(obj.StartTime);
-                    var stopTime='';
-                    if (obj.StopTime.length > 0){
-                        stopTime=Number(obj.StopTime);
-                    }else{
-                        stopTime=Date.now() / 1000;
+                    var startTime = Number(obj.StartTime);
+                    var stopTime = '';
+                    if (obj.StopTime.length > 0) {
+                        stopTime = Number(obj.StopTime);
+                    } else {
+                        stopTime = Date.now() / 1000;
                     }
-                    
+
                     var timeexpenditure = stopTime - startTime;
                     TotalDuration += timeexpenditure;
-                    var startDayAgo = prettyDayElapsed(Date.now()/1000 - startTime)-1;
-                    var stopDayAgo = prettyDayElapsed(Date.now()/1000 - stopTime) - 1;
-                    if (startDayAgo <7){
-                        if (startDayAgo==stopDayAgo){
-                            LastSevenDays[startDayAgo]['DayTotal']+=timeexpenditure;
-                            
+                    var startDayAgo = prettyDayElapsed(Date.now() / 1000 - startTime) - 1;
+                    var stopDayAgo = prettyDayElapsed(Date.now() / 1000 - stopTime) - 1;
+                    if (startDayAgo < 7) {
+                        if (startDayAgo == stopDayAgo) {
+                            LastSevenDays[startDayAgo]['DayTotal'] += timeexpenditure;
+
                         }
                     }
                     console.log((LastSevenDays));
                 }
-                
+
                 // console.log(taskname);
             }
-            if (FinalReport.length>0){
-                res.json({"Data":FinalReport,"LastSevenTotal":LastSevenDays});
-            }else{
-                res.json({"Data":CompleteReport,"TotalTime":prettyTimeElapsed(taskAllTime)});
+            if (FinalReport.length > 0) {
+                res.json({ "Data": FinalReport, "LastSevenTotal": LastSevenDays });
+            } else {
+                res.json({ "Data": CompleteReport, "TotalTime": prettyTimeElapsed(taskAllTime) });
             }
-            
+
         } else {
             res.json({ Error: "Nothing to retrieve! Use POST to add first TimeEvent" });
         }
