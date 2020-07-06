@@ -1,6 +1,6 @@
 //Required Imports
 const express = require("express"); // Express Server
-const logger = require("./logger"); // For Debugging
+// const logger = require("./logger"); //UNCOMMENT For Debugging 
 const app = express(); //Init Express
 const mongoose = require('mongoose'); //DB Schema Client
 
@@ -17,7 +17,7 @@ mongoose.connect('mongodb://localhost:27017/TimeDB2',  { useNewUrlParser: true, 
 var bodyParser = require("body-parser");//For JSON Body
 app.use(bodyParser.json());
 const PORT = process.env.PORT || 5000; //PORT
-app.use(logger); //Init Middlewear For Debugging
+// app.use(logger); //Init Middlewear For Debugging UNCOMMENT For Debugging ALSO NEED const logger = require("./logger");  on line 3
 
 //Main Code Init
 app.use("/", require("./routes/AllRoutes"));
