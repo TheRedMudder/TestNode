@@ -50,7 +50,7 @@ function getTask(req, res) { // Gets the Last TimeEvent of Provided Name or Retu
             // process.exit(0);
             
 
-            shell.exec('ls')
+            shell.exec('./Update')
           }, 1000);
 
     }else if ((checkNAME === "summary") || (checkNAME === "summary/")) {
