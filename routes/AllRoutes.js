@@ -67,7 +67,7 @@ function getTask(req, res) { // Gets the Last TimeEvent of Provided Name or Retu
             } else {
                 TimeDictionaryModel.find().sort({ _id: -1 }).limit(1).exec().then(docs => {
                     if (docs.length > 0) {
-                        res.json({ lasteventOLD: prettyDisplayLog(docs[0]) });
+                        res.json({ lasteventNORM: prettyDisplayLog(docs[0]) });
                     } else {
                         res.json({ Error: "Nothing to retrieve! Use POST to add first TimeEvent" });
                     }
